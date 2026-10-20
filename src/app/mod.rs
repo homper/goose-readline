@@ -127,6 +127,8 @@ pub struct App {
     pub session_id: String,
     pub session_names: BTreeMap<String, String>,
     pub agent_caps: serde_json::Value,
+    pub active_session_provider: Option<String>,
+    pub session_provider_options: Option<Vec<ModelOption>>,
     pub active_session_model: Option<String>,
     pub session_model_options: Option<Vec<ModelOption>>,
     pub active_effort: Option<String>,
@@ -261,6 +263,9 @@ impl App {
                 }
                 "/model" | "/models" => {
                     self.handle_model(&mut crossterm_events).await;
+                }
+                "/provider" => {
+                    self.handle_provider(&mut crossterm_events).await;
                 }
                 "/thinking" => {
                     self.handle_thinking(&mut crossterm_events).await;
@@ -698,6 +703,12 @@ impl App {
     }
 
     fn apply_session_config_options(&mut self, resp: &serde_json::Value) {
+        if let Some(psel) = model_search::extract_provider_select(resp.get("configOptions")) {
+            self.active_session_provider = psel.current;
+            if !psel.options.is_empty() {
+                self.session_provider_options = Some(psel.options);
+            }
+        }
         if let Some(sel) = model_search::extract_model_select(resp.get("configOptions")) {
             self.active_session_model = sel.current;
             if !sel.options.is_empty() {
@@ -997,6 +1008,91 @@ touched, and open questions. Be terse and information-dense. Output only the bri
 
     // ---- /model + /thinking ----
 
+    /// /provider: switch the provider, then pick a model from the new list.
+    async fn handle_provider(&mut self, crossterm_events: &mut EventStream) {
+        let opts = match &self.session_provider_options {
+            Some(o) if o.len() > 1 => o.clone(),
+            _ => {
+                stdout_line(&format!(
+                    "\nℹ️  Provider list not available for this session (current: {}).",
+                    self.active_session_provider.as_deref().unwrap_or("(default)")
+                ));
+                return;
+            }
+        };
+        loop {
+            stdout_line(&format!("\n{}Switch provider{}", render::BOLD, render::RESET));
+            for (i, o) in opts.iter().enumerate() {
+                let star = if Some(o.value.clone()) == self.active_session_provider {
+                    format!("{}★{} ", render::YELLOW, render::RESET)
+                } else {
+                    String::new()
+                };
+                let label = if o.name != o.value {
+                    format!("  {DIM}{}{RESET}", o.name, DIM = render::DIM, RESET = render::RESET)
+                } else {
+                    String::new()
+                };
+                stdout_line(&format!("   {}. {star}{}{label}", i + 1, o.value));
+            }
+            out_str("\nChoose (number, 'c' to cancel): ");
+            let answer = self
+                .read_single_line(crossterm_events, Some("0123456789cC"))
+                .await;
+            let Some(answer) = answer else {
+                stdout_line("");
+                return;
+            };
+            let t = answer.trim().to_lowercase();
+            if t == "c" || t == "cancel" {
+                stdout_line("");
+                return;
+            }
+            if t.is_empty() {
+                continue;
+            }
+            let choice: usize = match t.parse::<usize>() {
+                Ok(n) => n - 1,
+                Err(_) => {
+                    stdout_line("Invalid choice.");
+                    continue;
+                }
+            };
+            if choice >= opts.len() {
+                stdout_line("Invalid choice.");
+                continue;
+            }
+            let v = opts[choice].value.clone();
+            if Some(v.clone()) == self.active_session_provider {
+                stdout_line(&format!("{DIM}Already on {v}{RESET}", DIM = render::DIM, RESET = render::RESET));
+                return;
+            }
+            match agent::set_config_option(&self.cx, &self.session_id, "provider", &v).await {
+                Ok(resp) => {
+                    self.apply_session_config_options(&resp);
+                    stdout_line(&format!(
+                        "{}✓{} Provider switched to {BOLD}{}{RESET}.",
+                        render::GREEN,
+                        render::RESET,
+                        self.active_session_provider.as_deref().unwrap_or(&v),
+                        BOLD = render::BOLD,
+                        RESET = render::RESET
+                    ));
+                    stdout_line("");
+                    self.handle_model(crossterm_events).await;
+                    return;
+                }
+                Err(err) => {
+                    stdout_line(&format!(
+                        "{}⚠️  Could not switch provider:{} {err:#}",
+                        render::RED,
+                        render::RESET
+                    ));
+                }
+            }
+        }
+    }
+
     async fn handle_model(&mut self, crossterm_events: &mut EventStream) {
         if let Err(err) = self.handle_model_inner(crossterm_events).await {
             stdout_line(&format!("\n⚠️  {err:#}\n"));
@@ -1040,9 +1136,13 @@ touched, and open questions. Be terse and information-dense. Output only the bri
 
         loop {
             stdout_line(&format!(
-                "\n{}Switch model{}{}",
+                "\n{}Switch model{}{}{}",
                 render::BOLD,
                 render::RESET,
+                match self.active_session_provider.as_deref() {
+                    Some(p) => format!("  {DIM}(provider: {p}){RESET}", DIM = render::DIM, RESET = render::RESET),
+                    None => String::new(),
+                },
                 match &cfg_path {
                     Some(p) => format!("  {DIM}(favourites from {}){RESET}", display_config_path(p), DIM = render::DIM, RESET = render::RESET),
                     None => String::new(),
@@ -1647,6 +1747,9 @@ touched, and open questions. Be terse and information-dense. Output only the bri
             stdout_line(&format!("     name    : {name}"));
         }
         stdout_line(&format!("     session : {}", self.session_id));
+        if let Some(provider) = &self.active_session_provider {
+            stdout_line(&format!("     provider: {provider}"));
+        }
         stdout_line(&format!("     model   : {main_model}"));
         if let Some(opts) = &self.session_effort_options {
             if !opts.is_empty() {
@@ -1836,6 +1939,8 @@ pub async fn main_main() -> Result<()> {
             session_id: String::new(),
             session_names: BTreeMap::new(),
             agent_caps: serde_json::Value::Null,
+            active_session_provider: None,
+            session_provider_options: None,
             active_session_model: None,
             session_model_options: None,
             active_effort: None,

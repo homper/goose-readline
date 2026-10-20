@@ -354,10 +354,16 @@ pub fn extract_model_select(config_options: Option<&serde_json::Value>) -> Optio
     extract_select(config_options, |id| id == "model")
 }
 
-/// Extract the thinking/effort select (id "effort", fallback "thinking"/
-/// "reasoning") from a session response's configOptions.
+/// Extract the thinking/effort select (goose uses "thinking_effort";
+/// "effort"/"thinking"/"reasoning" kept as fallbacks).
 pub fn extract_effort_select(config_options: Option<&serde_json::Value>) -> Option<SelectExtract> {
     extract_select(config_options, |id| {
-        id == "effort" || id == "thinking" || id == "reasoning"
+        id == "thinking_effort" || id == "effort" || id == "thinking" || id == "reasoning"
     })
+}
+
+/// Extract the provider select (id == "provider") from a session response's
+/// configOptions.
+pub fn extract_provider_select(config_options: Option<&serde_json::Value>) -> Option<SelectExtract> {
+    extract_select(config_options, |id| id == "provider")
 }

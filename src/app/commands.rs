@@ -42,6 +42,7 @@ pub const COMMAND_HELP: &[(&str, &str)] = &[
     ("/export", "Export the session transcript"),
     ("/models", "Switch the active model (alias: /model)"),
     ("/model", "Switch the active model (in place, from config + candidates)"),
+    ("/provider", "Switch the provider (then pick a model from its list)"),
     ("/thinking", "Choose the thinking/reasoning (effort) level for the active model"),
     ("/status", "Show sessions, models, and token/cost usage"),
     ("/codex-balance", "Show Codex (ChatGPT subscription) rate-limit usage"),
@@ -54,6 +55,7 @@ pub const COMMAND_HELP: &[(&str, &str)] = &[
 
 pub const IMPLEMENTED_COMMANDS: &[&str] = &[
     "/exit",
+    "/provider",
     "/quit",
     "/q",
     "/help",
@@ -95,8 +97,8 @@ pub fn is_stub_command(trimmed: &str) -> bool {
 
 pub const COMPLETABLE_COMMANDS: &[&str] = &[
     "/exit", "/quit", "/q", "/help", "/status", "/sessions", "/compact", "/model", "/models",
-    "/thinking", "/codex-balance", "/zai-balance", "/glm-balance", "/openrouter-balance",
-    "/resume", "/new", "/clear",
+    "/provider", "/thinking", "/codex-balance", "/zai-balance", "/glm-balance",
+    "/openrouter-balance", "/resume", "/new", "/clear",
 ];
 
 pub fn print_command_help() {
