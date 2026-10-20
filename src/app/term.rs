@@ -37,8 +37,15 @@ pub fn terminal_columns() -> usize {
 }
 
 /// Enter raw mode with bracketed paste + disambiguated escape codes.
+///
+/// crossterm's raw mode uses cfmakeraw, which also clears OPOST — plain
+/// "\n" from println! then stair-cases (LF without CR). Restore the output
+/// post-processing flags so \n still means \r\n on the wire; input stays
+/// fully raw. (Node's setRawMode leaves OPOST alone — this matches the TS
+/// client's behavior.)
 pub fn setup() -> Result<()> {
     enable_raw_mode()?;
+    restore_output_post_processing();
     let mut out = io::stdout().lock();
     execute!(
         out,
@@ -46,6 +53,18 @@ pub fn setup() -> Result<()> {
         PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES)
     )?;
     Ok(())
+}
+
+fn restore_output_post_processing() {
+    // SAFETY: plain termios getattr/setattr on stdout; failures are ignored
+    // (non-tty stdout keeps crossterm's flags).
+    unsafe {
+        let mut t: libc::termios = std::mem::zeroed();
+        if libc::tcgetattr(libc::STDOUT_FILENO, &mut t) == 0 {
+            t.c_oflag |= libc::OPOST | libc::ONLCR;
+            libc::tcsetattr(libc::STDOUT_FILENO, libc::TCSANOW, &t);
+        }
+    }
 }
 
 /// Restore the terminal: paste off, kitty flags popped, cursor shown, cooked

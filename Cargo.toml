@@ -18,6 +18,7 @@ serde_json = "1"
 regex = "1"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 directories = "6"
+libc = "0.2"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 agent-client-protocol = { version = "2.2.0", default-features = false }
 goose = { path = "../goose/crates/goose", default-features = false, features = ["rustls-tls", "online-model-meta"] }

@@ -2001,6 +2001,7 @@ dependencies = [
  "directories",
  "futures",
  "goose",
+ "libc",
  "regex",
  "reqwest 0.12.28",
  "serde",
