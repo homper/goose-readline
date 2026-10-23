@@ -37,15 +37,24 @@ pub fn read_zai_key_from_kilo_auth() -> Option<String> {
 }
 
 /// Apply the run-goose.sh env defaults: GOOSE_PROVIDER=zai_coding_plan,
-/// GOOSE_MODEL=glm-5.3, and ZAI_CODING_PLAN_API_KEY derived from kilo's
-/// auth.json (only when not already set). Must run before the goose Config
-/// is first touched.
+/// GOOSE_MODEL=glm-5.3, GOOSE_MODE=smart_approve, and ZAI_CODING_PLAN_API_KEY
+/// derived from kilo's auth.json (only when not already set). Must run before
+/// the goose Config is first touched.
+///
+/// GOOSE_MODE deviates from run-goose.sh on purpose: goose's default `Auto`
+/// mode approves every tool call internally and never sends permission
+/// requests, which would bypass our whole permission UI. smart_approve asks
+/// only for sensitive calls. TODO(plan): drop all implicit env vars; let the
+/// user set them or use goose's config.yaml instead.
 pub fn apply_defaults() {
     if std::env::var("GOOSE_PROVIDER").is_err() {
         std::env::set_var("GOOSE_PROVIDER", "zai_coding_plan");
     }
     if std::env::var("GOOSE_MODEL").is_err() {
         std::env::set_var("GOOSE_MODEL", "glm-5.3");
+    }
+    if std::env::var("GOOSE_MODE").is_err() {
+        std::env::set_var("GOOSE_MODE", "smart_approve");
     }
     if std::env::var("ZAI_CODING_PLAN_API_KEY").is_err() {
         if let Some(key) = read_zai_key_from_kilo_auth() {
