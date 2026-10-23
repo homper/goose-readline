@@ -21,7 +21,7 @@ directories = "6"
 libc = "0.2"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 agent-client-protocol = { version = "2.2.0", default-features = false }
-goose = { path = "../goose/crates/goose", default-features = false, features = ["rustls-tls", "online-model-meta"] }
+goose = { git = "https://github.com/aaif-goose/goose", rev = "591edd47cf2cfea4957d720c607cf2a4def8673d", default-features = false, features = ["rustls-tls", "online-model-meta"] }
 
 [profile.release]
 lto = "thin"

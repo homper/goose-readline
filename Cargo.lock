@@ -1797,6 +1797,7 @@ dependencies = [
 [[package]]
 name = "goose"
 version = "1.53.0"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "agent-client-protocol",
  "agent-client-protocol-schema",
@@ -1887,6 +1888,7 @@ dependencies = [
 [[package]]
 name = "goose-acp-macros"
 version = "1.53.0"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "quote",
  "syn 3.0.9",
@@ -1895,6 +1897,7 @@ dependencies = [
 [[package]]
 name = "goose-agent"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1912,6 +1915,7 @@ dependencies = [
 [[package]]
 name = "goose-context-management"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1927,6 +1931,7 @@ dependencies = [
 [[package]]
 name = "goose-download-manager"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "anyhow",
  "once_cell",
@@ -1939,6 +1944,7 @@ dependencies = [
 [[package]]
 name = "goose-provider-types"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -1967,6 +1973,7 @@ dependencies = [
 [[package]]
 name = "goose-providers"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -2014,6 +2021,7 @@ dependencies = [
 [[package]]
 name = "goose-sdk-types"
 version = "0.1.0-alpha.11"
+source = "git+https://github.com/aaif-goose/goose?rev=591edd47cf2cfea4957d720c607cf2a4def8673d#591edd47cf2cfea4957d720c607cf2a4def8673d"
 dependencies = [
  "agent-client-protocol",
  "agent-client-protocol-schema",
