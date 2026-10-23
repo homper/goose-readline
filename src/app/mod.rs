@@ -1535,7 +1535,8 @@ touched, and open questions. Be terse and information-dense. Output only the bri
                 .unwrap_or("")
                 .to_string();
             if token.is_empty() {
-                return (Vec::new(), line.to_string());
+                // Tab on an empty search: offer every available provider.
+                return (model_search::provider_prefixes(&model_opts), line.to_string());
             }
             if model_search::is_full_path_token(&token) {
                 (model_search::match_model_paths(&token, &model_opts), line.to_string())

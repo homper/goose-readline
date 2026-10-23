@@ -25,6 +25,22 @@ pub fn extract_model_words(models: &[ModelOption]) -> Vec<String> {
     set.into_iter().collect()
 }
 
+/// Candidates for Tab on an empty search: distinct provider prefixes
+/// ("zai/", "anthropic/", ...) of all model values, sorted. When no value
+/// contains "/" (single-provider sessions publish bare model ids), falls
+/// back to every model value.
+pub fn provider_prefixes(models: &[ModelOption]) -> Vec<String> {
+    let set: BTreeSet<String> = models
+        .iter()
+        .filter_map(|m| m.value.split_once('/'))
+        .map(|(p, _)| format!("{p}/"))
+        .collect();
+    if set.is_empty() {
+        return models.iter().map(|m| m.value.clone()).collect();
+    }
+    set.into_iter().collect()
+}
+
 /// A token "looks like a full model path" when it already contains a
 /// provider separator ("/").
 pub fn is_full_path_token(token: &str) -> bool {
@@ -249,6 +265,26 @@ mod tests {
 
         let words_hits = match_model_words("son", &words);
         assert_eq!(words_hits.first().map(String::as_str), Some("sonnet"));
+    }
+
+    #[test]
+    fn provider_prefixes_sorted_distinct() {
+        assert_eq!(
+            provider_prefixes(&opts()),
+            vec!["anthropic/".to_string(), "kilo/".to_string(), "zai/".to_string()]
+        );
+    }
+
+    #[test]
+    fn provider_prefixes_fallback_without_slash() {
+        let bare = vec![
+            ModelOption { value: "glm-5.3".into(), name: "GLM 5.3".into() },
+            ModelOption { value: "glm-5.3-air".into(), name: "GLM 5.3 Air".into() },
+        ];
+        assert_eq!(
+            provider_prefixes(&bare),
+            vec!["glm-5.3".to_string(), "glm-5.3-air".to_string()]
+        );
     }
 
     #[test]

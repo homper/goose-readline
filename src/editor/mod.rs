@@ -1412,7 +1412,11 @@ impl RawInput {
         self.completion_token_len = token.chars().count();
         self.completion_index = if backward { hits.len() as isize - 1 } else { -1 };
         let value: String = if self.completion_index == -1 {
-            if common.chars().count() >= token.chars().count() {
+            // An empty token (Tab on empty search) keeps the line empty —
+            // only show the candidate list, no common-prefix insertion.
+            if token.is_empty() {
+                token
+            } else if common.chars().count() >= token.chars().count() {
                 common
             } else {
                 token
@@ -1436,11 +1440,15 @@ impl RawInput {
         let pos = ((pos + dir + states as i32) % states as i32) as usize;
         self.completion_index = pos as isize - 1;
         let value: String = if self.completion_index == -1 {
-            let c = common_prefix(&self.completion_matches);
-            if c.chars().count() >= self.completion_token_len {
-                c
-            } else {
+            if self.completion_token.is_empty() {
                 self.completion_token.clone()
+            } else {
+                let c = common_prefix(&self.completion_matches);
+                if c.chars().count() >= self.completion_token_len {
+                    c
+                } else {
+                    self.completion_token.clone()
+                }
             }
         } else {
             self.completion_matches[self.completion_index as usize].clone()
@@ -2319,6 +2327,32 @@ mod tests {
         ed.handle_key(Key::Char('x')); // break cycling, insert
         assert!(!ed.completion_active);
         assert_eq!(ed.text(), "fx");
+    }
+
+    #[test]
+    fn completion_on_empty_token_only_shows_candidates() {
+        let completer: Completer = Box::new(|_line: &str, _col: usize| {
+            (vec!["glm-5.2".to_string(), "glm-5.3".to_string()], String::new())
+        });
+        let history = Arc::new(Mutex::new(vec![]));
+        let mut ed = RawInput::new(
+            Box::new(TestTerm::new(80, 24)),
+            "search> ",
+            history,
+            Some(completer),
+        );
+        ed.start_read(false);
+
+        ed.handle_key(Key::Tab);
+        assert!(ed.completion_active);
+        assert_eq!(ed.text(), "");
+
+        ed.handle_key(Key::Tab);
+        assert_eq!(ed.text(), "glm-5.2");
+        ed.handle_key(Key::Tab);
+        assert_eq!(ed.text(), "glm-5.3");
+        ed.handle_key(Key::Tab);
+        assert_eq!(ed.text(), "");
     }
 
     #[test]
